@@ -86,18 +86,21 @@ class TestGCPDisk(TestGCP):
 
     def test_resize(self, mock_build, *args):
         test_name = 'test_name'
-        test_zone = 'test_zone'
-        test_size = 40
+        test_size = '40'
+        mock_build().disks().resize().execute.return_value = {
+                'id': 'fake_id',
+                'name': test_name
+                }
+        mock_build().globalOperations().get().execute.side_effect = [
+                {'status': 'PENDING', 'name': 'Dave'},
+                {'status': 'DONE', 'name': 'Dave'},
+                ]
 
-        self.ctxmock.instance.runtime_properties['sizeGb'] = 'initial_value'
-        mock_build().disks().resize().execute.return_value = {'id': 'fake_id', 'name': test_name}
+        disk.resize(test_name, 'a very fake zone', test_size)
 
-        disk.resize(test_name, test_zone, test_size)
-
-        mock_build.assert_called_once()
         mock_build().disks().resize.assert_called_with(
                 project='not really a project',
-                name=test_name,
-                zone=test_zone,
-                size=test_size,
+                zone='a very fake zone',
+                disk=test_name,
+                body={'sizeGb': test_size},
                 )
